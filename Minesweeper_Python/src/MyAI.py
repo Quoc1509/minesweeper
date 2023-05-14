@@ -20,7 +20,7 @@ from collections import deque
 class MyAI(AI):
 
     # Tile class
-    class __Tile():
+    class Tiles():
         mine = False
         covered = True
         flag = False
@@ -46,8 +46,8 @@ class MyAI(AI):
                         for j in range(self.col)]
         self.prob = dict()
         self.mines = []
-        self.minesLeft = totalMines
-        self.board = None
+        self.mine_remain = totalMines
+        self.table = None
         self.createTable()
         self.firstMove()
 
@@ -64,7 +64,7 @@ class MyAI(AI):
     def logMove(self, action, col, row):
         self.cLast = col
         self.rLast = row
-        self.lastTile = self.board[col][row]
+        self.lastTile = self.table[col][row]
         self.lastAction = action
         self.letMove += 1
         self.unknown.remove((col, row))
@@ -77,7 +77,7 @@ class MyAI(AI):
         for c in range(col-1, col+2):
             for r in range(row-1, row+2):
                 if self.inBounds(c, r) and (c, r) != (col, row):
-                    if self.board[c][r].covered == True:
+                    if self.table[c][r].covered == True:
                         count += 1
                         covered.append((c, r))
         return count, covered
@@ -86,10 +86,10 @@ class MyAI(AI):
         col = loc[0]
         row = loc[1]
         if (col, row) not in self.mines:
-            self.minesLeft -= 1
+            self.mine_remain -= 1
             self.mines.append((col, row))
-            self.board[col][row].mine = True
-            self.board[col][row].flag = True
+            self.table[col][row].mine = True
+            self.table[col][row].flag = True
             self.unknown.remove((col, row))
 
     def arroundMines(self, col, row):
@@ -98,8 +98,8 @@ class MyAI(AI):
         for c in range(col-1, col+2):
             for r in range(row-1, row+2):
                 if self.inBounds(c, r):
-                    if self.board[c][r].mine == True:
-                        self.board[c][r].flag = True
+                    if self.table[c][r].mine == True:
+                        self.table[c][r].flag = True
                         count += 1
                         mine_num.append((c, r))
         return count, mine_num
@@ -118,7 +118,7 @@ class MyAI(AI):
     def neighbor_test(self, col, row):
         safe = []
         center = (col, row)
-        num_center = self.board[col][row].number
+        num_center = self.table[col][row].number
 
         neighbors_list = []
         for c in range(col-2, col+3):
@@ -128,7 +128,7 @@ class MyAI(AI):
         neighbors = set(neighbors_list)
 
         for neighbor in neighbors:
-            neighbor_arround = self.board[neighbor[0]][neighbor[1]].number
+            neighbor_arround = self.table[neighbor[0]][neighbor[1]].number
             if neighbor_arround < 1:
                 continue
 
@@ -166,7 +166,7 @@ class MyAI(AI):
         constraints = []
         for col in range(self.col):
             for row in range(self.row):
-                if self.board[col][row].number > 0 and self.arroundUnknown(col, row)[0] > 0:
+                if self.table[col][row].number > 0 and self.arroundUnknown(col, row)[0] > 0:
                     constraints.append((col, row))
         return constraints
 
@@ -186,13 +186,13 @@ class MyAI(AI):
         self.unknown.remove((col, row))
         self.cLast = col
         self.rLast = row
-        self.board[col][row].covered = False
-        self.board[col][row].nubmer = 0
-        self.lastTile = self.board[col][row]
+        self.table[col][row].covered = False
+        self.table[col][row].nubmer = 0
+        self.lastTile = self.table[col][row]
         self.lastAction = AI.Action(1)
 
     def createTable(self) -> None:
-        self.board = [[self.__Tile() for i in range(self.row)]
+        self.table = [[self.Tiles() for i in range(self.row)]
                       for j in range(self.col)]
         self.limitMove = self.col * self.row * 2 - 1
 
@@ -211,7 +211,7 @@ class MyAI(AI):
         return True
 
     def known(self, loc):
-        if self.board[loc[0]][loc[1]].covered == True and self.board[loc[0]][loc[1]].flag == False:
+        if self.table[loc[0]][loc[1]].covered == True and self.table[loc[0]][loc[1]].flag == False:
             return False
         return True
 
@@ -258,7 +258,7 @@ class MyAI(AI):
         for col in range(self.cLast-1, self.cLast+2):
             for row in range(self.rLast-1, self.rLast+2):
                 if (self.inBounds(col, row) and
-                        not (col == self.cLast and row == self.rLast)) and ((col, row) not in self.available) and self.board[col][row].covered == True:
+                        not (col == self.cLast and row == self.rLast)) and ((col, row) not in self.available) and self.table[col][row].covered == True:
                     self.available.append((col, row))
 
     def getAction(self, number: int) -> "Action Object":
@@ -269,7 +269,7 @@ class MyAI(AI):
                 # for col in range(self.cLast-1, self.cLast+2):
                 #     for row in range(self.rLast-1, self.rLast+2):
                 #         if (self.inBounds(col, row) and
-                #                 not (col == self.cLast and row == self.rLast)) and ((col, row) not in self.available) and self.board[col][row].covered == True:
+                #                 not (col == self.cLast and row == self.rLast)) and ((col, row) not in self.available) and self.table[col][row].covered == True:
                 #             self.available.append((col, row))
 
             while (self.available != deque([])):
@@ -279,9 +279,9 @@ class MyAI(AI):
 
             for col in range(0, self.col):
                 for row in range(0, self.row):
-                    if (self.board[col][row].covered == False and
-                        self.board[col][row].number != 0 and
-                        self.board[col][row].number ==
+                    if (self.table[col][row].covered == False and
+                        self.table[col][row].number != 0 and
+                        self.table[col][row].number ==
                             self.arroundCovered(col, row)[0]):
 
                         mines = self.arroundCovered(col, row)[1]
@@ -289,7 +289,7 @@ class MyAI(AI):
                             self.theMines(i)
             for col in range(0, self.col):
                 for row in range(0, self.row):
-                    if ((self.board[col][row].number ==
+                    if ((self.table[col][row].number ==
                         self.arroundMines(col, row)[0]) and
                         (self.arroundCovered(col, row)[0] -
                             self.arroundMines(col, row)[0] > 0)):
@@ -306,7 +306,7 @@ class MyAI(AI):
 
             for col in range(self.col):
                 for row in range(self.row):
-                    if self.board[col][row].number > 0 and self.arroundUnknown(col, row)[0] > 0:
+                    if self.table[col][row].number > 0 and self.arroundUnknown(col, row)[0] > 0:
                         neigh = self.neighbor_test(col, row)
                         if neigh is not None and neigh != []:
                             for i in neigh:
@@ -322,7 +322,7 @@ class MyAI(AI):
             frontier = []
 
             unknown = self.unknown
-            totalMinesLeft = self.minesLeft
+            totalMinesLeft = self.mine_remain
 
             constraints = self.constraints()
             constraintsCount = len(constraints)
@@ -346,8 +346,8 @@ class MyAI(AI):
                     for tile in sub_frontier:
                         col = tile_to_col.get(tile)
                         matrix[row][col] = 1
-                    minesCount = self.board[constraint[0]][constraint[1]
-                                                           ].number - self.arroundMines(constraint[0], constraint[1])[0]
+                    minesCount = self.table[constraint[0]][constraint[1]].number - \
+                        self.arroundMines(constraint[0], constraint[1])[0]
                     matrix[row][-1] = minesCount
                     row += 1
                 for i in range(columnCount):
@@ -407,7 +407,7 @@ class MyAI(AI):
                 self.logMove(AI.Action(1), coord[0], coord[1])
                 return Action(AI.Action(1), coord[0], coord[1])
 
-            if (self.minesLeft == 0):
+            if (self.mine_remain == 0):
                 return Action(AI.Action(0))
 
             while (self.available != deque([])):
@@ -415,7 +415,7 @@ class MyAI(AI):
                 self.logMove(AI.Action(1), coord[0], coord[1])
                 return Action(AI.Action(1), coord[0], coord[1])
 
-            if (self.minesLeft == 0):
+            if (self.mine_remain == 0):
                 return Action(AI.Action(0))
         except (ValueError, IndexError):
             print('!!! ValueError or IndexError in getAction')
