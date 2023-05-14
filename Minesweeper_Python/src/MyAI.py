@@ -310,7 +310,7 @@ class MyAI(AI):
                         neigh = self.neighbor_test(col, row)
                         if neigh is not None and neigh != []:
                             for i in neigh:
-                                if i in self.unknown and _ not in self.available:
+                                if i in self.unknown and i not in self.available:
                                     self.available.append(i)
 
             while (self.available != deque([])):
